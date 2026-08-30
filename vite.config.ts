@@ -1,77 +1,41 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-import { VitePWA } from 'vite-plugin-pwa'
-import path from 'path'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
+import path from 'path';
 
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'Classroom Voice Studio',
-        short_name: 'CVS',
-        description: 'Create classroom announcements using your trained voice profile',
+        short_name: 'Voice Studio',
+        description: 'Professional voice announcement system for educational settings',
         theme_color: '#1976d2',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'portrait-primary',
-        start_url: '/',
-        scope: '/',
-        icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any'
-          },
-          {
-            src: 'pwa-maskable-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-            purpose: 'maskable'
-          },
-          {
-            src: 'pwa-maskable-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
-          }
-        ],
-        categories: ['education', 'productivity'],
-        screenshots: [
-          {
-            src: 'screenshots/screenshot1.png',
-            sizes: '540x720',
-            type: 'image/png',
-            form_factor: 'narrow'
-          },
-          {
-            src: 'screenshots/screenshot2.png',
-            sizes: '1280x720',
-            type: 'image/png',
-            form_factor: 'wide'
-          }
-        ]
+        background_color: '#ffffff'
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/graph\.microsoft\.com\/.*/i,
+            urlPattern: /^https:\/\/api\.example\.com\/.*/i,
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'microsoft-graph-api',
+              cacheName: 'api-cache',
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 300
+                maxAgeSeconds: 24 * 60 * 60
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 365 * 24 * 60 * 60
               }
             }
           }
@@ -84,11 +48,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       '@components': path.resolve(__dirname, './src/components'),
       '@pages': path.resolve(__dirname, './src/pages'),
-      '@hooks': path.resolve(__dirname, './src/hooks'),
       '@services': path.resolve(__dirname, './src/services'),
+      '@store': path.resolve(__dirname, './src/store'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
       '@utils': path.resolve(__dirname, './src/utils'),
       '@types': path.resolve(__dirname, './src/types'),
-      '@store': path.resolve(__dirname, './src/store')
+      '@theme': path.resolve(__dirname, './src/theme')
     }
   },
   server: {
@@ -97,7 +62,17 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: false,
-    minify: 'terser'
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['@mui/material', '@mui/icons-material'],
+          'vendor-audio': ['wavesurfer.js'],
+          'vendor-state': ['zustand'],
+          'vendor-storage': ['dexie']
+        }
+      }
+    }
   }
-})
+});
